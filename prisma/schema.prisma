@@ -12,3 +12,83 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  email    String  @unique
+  name     String?
+  password String
+
+  workInterval   Int? @default(50) @map("work_interval")
+  breakInterval  Int? @default(10) @map("break_interval")
+  intervalsCount Int? @default(7) @map("interval_count")
+
+  tasks            Task[]
+  timeBlocks       TimeBlock[]
+  pomodoroSessions PomodoroSession[]
+
+  @@map("user")
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  name        String
+  priority    Priority?
+  isCompleted Boolean   @default(false) @map("is_completed")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+}
+
+enum Priority {
+  low
+  medium
+  high
+}
+
+model TimeBlock {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  name     String
+  color    String?
+  duration Int
+  order    Int     @default(1)
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("time_block")
+}
+
+model PomodoroSession {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  isCompleted Boolean @default(false) @map("is_completed")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("pomodoro_session")
+
+  pomodoroRounds PomodoroRound[]
+}
+
+model PomodoroRound {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  totalSeconds Int     @map("total_seconds")
+  isCompleted  Boolean @default(false) @map("is_completed")
+
+  pomodoroSession   PomodoroSession @relation(fields: [pomodoroSessionId], references: [id], onDelete: Cascade)
+  pomodoroSessionId String          @map("pomodoro_session_id")
+
+  @@map("pomodoro_round")
+}
